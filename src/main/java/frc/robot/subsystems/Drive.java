@@ -41,13 +41,12 @@ public class Drive extends SubsystemBase{
     private SwerveModuleState[] moduleStates;
 
     private Drive(){
-        rightFront = new Module(8,1,0, Constants.rightAbsoluteEncoderOffset, false);
+        rightFront = new Module(8,1,0, Constants.rightAbsoluteEncoderOffset, true);
         leftFront = new Module(7,2,1, Constants.leftAbsoluteEncoderOffset, false);
         rightRear = new Module(6,3,2, Constants.rightAbsoluteEncoderOffset, true);
         leftRear = new Module(5,4,3, Constants.leftAbsoluteEncoderOffset, true);
         gyro = new Pigeon2(9);
     
-
         //Kinematics
         kinematics = new SwerveDriveKinematics(
             new Translation2d(Units.inchesToMeters(12.5), Units.inchesToMeters(12.5)), // Front Left
@@ -60,9 +59,13 @@ public class Drive extends SubsystemBase{
             new SwerveModulePosition[]{new SwerveModulePosition(), new SwerveModulePosition(), new SwerveModulePosition(), new SwerveModulePosition()},
             new Pose2d(0,0,new Rotation2d()) 
         );
+        //Acceleration limits
+        xLimiter = new SlewRateLimiter(Constants.maxDriveAcceletation);
+        yLimiter = new SlewRateLimiter(Constants.maxDriveAcceletation);
+        turnLimiter = new SlewRateLimiter(Constants.maxAngularAcceletation);
     }
 
-    public void driveSwerve(double xInput, double yInput, double thetaInput, boolean fieldInput, boolean botInput){
+    public void driveSwerve(double xInput, double yInput, double thetaInput, boolean botInput){
         xSpeed = xLimiter.calculate(xInput); //Limit on X acceleration
         ySpeed = yLimiter.calculate(yInput); //Limit on Y acceletation
         theta = turnLimiter.calculate(thetaInput); //Limit on rotational acceleration
@@ -78,18 +81,15 @@ public class Drive extends SubsystemBase{
         }
 
         //Try only using the relative field mode if other trouble shooting methods fail
-
-        if(fieldInput){
-            chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, theta, new Rotation2d(gyro.getYaw().getValueAsDouble())); //Bot moves relative to the field
-        }
-        else if(botInput){
+        
+        if(botInput){
             chassisSpeeds = new ChassisSpeeds(xSpeed, ySpeed, theta); //Bot moves relative to itself
         }
         else{
-            stopModules();
+            chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, theta, new Rotation2d(gyro.getYaw().getValueAsDouble())); //Bot moves relative to the field
         }
 
-        moduleStates = Constants.drivetrainKinematics.toSwerveModuleStates(chassisSpeeds); //Calc each module angle and speed
+        moduleStates = kinematics.toSwerveModuleStates(chassisSpeeds); //Calc each module angle and speed
         setModuleStates(moduleStates); //Apply to the modules
     }
 
@@ -101,7 +101,8 @@ public class Drive extends SubsystemBase{
     }
 
     public void setModuleStates(SwerveModuleState[] desiredStates){
-        kinematics.desaturateWheelSpeeds(desiredStates, Constants.gear4);
+        // kinematics.desaturateWheelSpeeds(desiredStates, Constants.gear4);
+        SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, Constants.gear4);
         leftFront.setState(desiredStates[0]);
         rightFront.setState(desiredStates[1]);
         leftRear.setState(desiredStates[2]);

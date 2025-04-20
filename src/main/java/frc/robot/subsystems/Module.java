@@ -1,10 +1,8 @@
 package frc.robot.subsystems;
 
 import com.ctre.phoenix6.hardware.TalonFX;
-import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
-import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkMaxConfig;
@@ -16,7 +14,6 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.AnalogEncoder;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.constants.Constants;
-import com.ctre.phoenix6.controls.VelocityVoltage;
 
 public class Module extends SubsystemBase{
     private SparkMax turn;
@@ -27,9 +24,10 @@ public class Module extends SubsystemBase{
     private AnalogEncoder absoluteEncoder;
     private PIDController turnPID;
     private double encoderOffset;
+    private boolean encoderReversed;
 
 
-    public Module(int driveID, int turnID, int absoluteEncoderID, double moduleOffset, boolean encoderReversed){
+    public Module(int driveID, int turnID, int absoluteEncoderID, double moduleOffset, boolean reversed){
         //Module initializations
         turn = new SparkMax(turnID, MotorType.kBrushless);
         drive = new TalonFX(driveID);
@@ -37,6 +35,7 @@ public class Module extends SubsystemBase{
         //Encoders
         absoluteEncoder = new AnalogEncoder(absoluteEncoderID, Constants.absoluteRadiansPerEncoderRotation,0);
         encoderOffset = moduleOffset;
+        encoderReversed = reversed;
         turnEncoder = turn.getEncoder();
 
         //Motor Configurations
@@ -59,7 +58,7 @@ public class Module extends SubsystemBase{
     }
 
     public Rotation2d getAngle(){
-        return Rotation2d.fromDegrees(turnEncoder.getPosition());
+        return Rotation2d.fromRadians(turnEncoder.getPosition()*(Constants.absoluteRadiansPerEncoderRotation));
     }
 
     public double getTurningPosition(){
@@ -79,18 +78,17 @@ public class Module extends SubsystemBase{
         double angle = absoluteEncoder.get();
         angle *= 2.0*Math.PI;
         angle -= encoderOffset;
-
-        return angle;
+        
+        return angle * (encoderReversed ? -1.0 : 1.0);
     }
-    
-
+        
     public void setState(SwerveModuleState state){
         if(Math.abs(state.speedMetersPerSecond) < 0.001){
             stopDrive();
             return;
         }
 
-        state = SwerveModuleState.optimize(state, getAbsoluteEncoder());
+        state.optimize(new Rotation2d(getAbsoluteEncoder()));
         drive.set(state.speedMetersPerSecond/ Constants.gear4); 
         turn.setVoltage(turnPID.calculate(getTurningPosition(), state.angle.getRadians()));
         // turnPID.setReference(state.angle.getDegrees(), ControlType.kPosition);

@@ -8,14 +8,14 @@ import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
 //import robot subsystems
-// import frc.robot.subsystems.Swerve;
-// import frc.robot.subsystems.operatorinterface;
+import frc.robot.subsystems.Drive;
+import frc.robot.subsystems.operatorinterface;
 // import frc.robot.subsystems.LEDS;
 // import frc.robot.commands.RobotContainer;
 
 public class Robot extends TimedRobot {
-  // public Swerve drive;
-  // public operatorinterface oi;
+  public Drive drive;
+  public operatorinterface oi;
   // public LEDS led;
 
   public Robot() {
@@ -23,9 +23,9 @@ public class Robot extends TimedRobot {
 
   @Override
   public void robotInit() {
-    // drive = Swerve.getInstance();
-    // led = LEDS.getInstance();
-    // oi = operatorinterface.getInstance();
+    drive = Drive.getInstance();
+    oi = operatorinterface.getInstance();
+    //led = LEDS.getInstance();
   }
 
   @Override
