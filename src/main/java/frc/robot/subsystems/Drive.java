@@ -46,10 +46,10 @@ public class Drive extends SubsystemBase{
     StructArrayPublisher<SwerveModuleState> publisher;
 
     private Drive(){
-        rightFront = new Module(8,1,0, Constants.rightAbsoluteEncoderOffset, true);
+        rightFront = new Module(8,1,0, Constants.rightAbsoluteEncoderOffset, false);
         leftFront = new Module(7,2,1, Constants.leftAbsoluteEncoderOffset, false);
-        rightRear = new Module(6,3,2, Constants.rightAbsoluteEncoderOffset, true);
-        leftRear = new Module(5,4,3, Constants.leftAbsoluteEncoderOffset, true);
+        rightRear = new Module(6,3,2, Constants.rightAbsoluteEncoderOffset, false);
+        leftRear = new Module(5,4,3, Constants.leftAbsoluteEncoderOffset, false);
         gyro = new Pigeon2(9);
     
         //Kinematics
@@ -94,6 +94,8 @@ public class Drive extends SubsystemBase{
 
         moduleStates = kinematics.toSwerveModuleStates(chassisSpeeds); //Calc each module angle and speed
         setModuleStates(moduleStates); //Apply to the modules
+
+        publisher.set(moduleStates);
     }
 
     public void stopModules(){
@@ -135,7 +137,6 @@ public class Drive extends SubsystemBase{
     public void periodic(){
         // Update the odometry constantly
         odometry.update(new Rotation2d(gyro.getYaw().getValueAsDouble()), getModulePositions());
-        publisher.set(moduleStates);
     }
 
     public static Drive getInstance(){
