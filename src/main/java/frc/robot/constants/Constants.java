@@ -1,21 +1,16 @@
 package frc.robot.constants;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.util.Units;
 
 public final class Constants {
-  public static final Translation2d robotCenter = new Translation2d(0, 0); // serves as "center of robot for calculations; robot will turn about this point
-  public static final Translation2d leftPodPosition = new Translation2d(-Units.inchesToMeters(5.5), -Units.inchesToMeters(5.5)); // units in meters
-  public static final Translation2d rightPodPosition = new Translation2d(Units.inchesToMeters(5.5), Units.inchesToMeters(5.5));
-  public static final SwerveDriveKinematics drivetrainKinematics = new SwerveDriveKinematics(robotCenter.minus(leftPodPosition), robotCenter.minus(rightPodPosition));
+  public static final double wheelDiameterMeters = 4.0;
 
   public static final double leftAbsoluteEncoderOffset = 1.006118384272561;//absolute encoder reading at position
   public static final double rightAbsoluteEncoderOffset = 1.056659935134538;// gears facing inwards: fwd/bck 
 
   public static final double turnRadiansPerMotorRotation = 2*Math.PI*15/33;
-  public static final double driveMetersPerMotorRotation = Units.inchesToMeters(2) * Math.PI * 33 / 45 / 15/13;
+  public static final double driveMetersPerMotorRotation = Units.inchesToMeters(4) * Math.PI * 33 / 45 / 15/13;
   public static final double absoluteRadiansPerEncoderRotation = 2*Math.PI;
   public static final double turnDriveSpeedMultiplier = 0.5;//0;
 

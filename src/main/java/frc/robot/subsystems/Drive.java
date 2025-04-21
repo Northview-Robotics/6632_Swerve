@@ -1,10 +1,13 @@
 package frc.robot.subsystems;
 
 import com.ctre.phoenix6.hardware.Pigeon2;
+import com.ctre.phoenix6.sim.Pigeon2SimState;
 
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
@@ -16,6 +19,7 @@ import frc.robot.constants.Constants;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
+import edu.wpi.first.networktables.StructPublisher;
 
 public class Drive extends SubsystemBase{
     private static Drive swerve = null;
@@ -26,6 +30,7 @@ public class Drive extends SubsystemBase{
     private Module rightRear;
     private Module leftRear;
 
+    //Odometry
     private Pigeon2 gyro;
 
     //SwerveMath
@@ -42,8 +47,12 @@ public class Drive extends SubsystemBase{
     private SlewRateLimiter turnLimiter;
     private SwerveModuleState[] moduleStates;
 
-    //Publish to advantage scope
-    StructArrayPublisher<SwerveModuleState> publisher;
+    //Advantage scope
+    private StructArrayPublisher<SwerveModuleState> publisher;
+    private StructPublisher<Pose3d> publisher3d;
+    private Pigeon2SimState pigeonSim;
+    private Pose2d currentPose2d;
+    private Pose3d currentPose3d;
 
     private Drive(){
         rightFront = new Module(8,1,0, Constants.rightAbsoluteEncoderOffset, false);
@@ -69,8 +78,10 @@ public class Drive extends SubsystemBase{
         yLimiter = new SlewRateLimiter(Constants.maxDriveAcceletation);
         turnLimiter = new SlewRateLimiter(Constants.maxAngularAcceletation);
 
-        //Publish to advantage scope
+        //Advantage scope
         publisher = NetworkTableInstance.getDefault().getStructArrayTopic("MyStates", SwerveModuleState.struct).publish();
+        publisher3d = NetworkTableInstance.getDefault().getStructTopic("MyPose", Pose3d.struct).publish();
+        pigeonSim = gyro.getSimState();
     }
 
     public void driveSwerve(double xInput, double yInput, double thetaInput){
@@ -137,6 +148,25 @@ public class Drive extends SubsystemBase{
     public void periodic(){
         // Update the odometry constantly
         odometry.update(new Rotation2d(gyro.getYaw().getValueAsDouble()), getModulePositions());
+
+        //Get current pose 3d for advantage scope
+        currentPose2d = odometry.getPoseMeters();
+        currentPose3d = new Pose3d(currentPose2d.getTranslation().getX(), currentPose2d.getTranslation().getY(), 0, new Rotation3d(currentPose2d.getRotation()));
+        //Send 3D data to advantage scope
+        publisher3d.set(currentPose3d);
+    }
+
+    //Sim
+    @Override
+    public void simulationPeriodic() {
+        leftFront.simulationPeriodic();
+        rightFront.simulationPeriodic();
+        leftRear.simulationPeriodic();
+        rightRear.simulationPeriodic();
+
+        // 2) compute the “true” yaw in degrees (e.g. from your odometry or directly from theta)
+        double yawDeg = odometry.getPoseMeters().getRotation().getDegrees();
+        pigeonSim.setRawYaw(yawDeg);
     }
 
     public static Drive getInstance(){

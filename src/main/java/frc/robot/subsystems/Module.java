@@ -1,6 +1,7 @@
 package frc.robot.subsystems;
 
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.sim.TalonFXSimState;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
@@ -26,6 +27,8 @@ public class Module extends SubsystemBase{
     private double encoderOffset;
     private boolean encoderReversed;
 
+    //Advantage scope
+    private TalonFXSimState driveSim;
 
     public Module(int driveID, int turnID, int absoluteEncoderID, double moduleOffset, boolean reversed){
         //Module initializations
@@ -46,7 +49,8 @@ public class Module extends SubsystemBase{
         turnPID = new PIDController(Constants.turnP, Constants.turnI, Constants.turnD);
         turnPID.enableContinuousInput(-Math.PI, Math.PI);
 
-       
+       //Advantage scope
+       driveSim = drive.getSimState();
     }
 
     public void stopDrive(){
@@ -99,5 +103,19 @@ public class Module extends SubsystemBase{
         turn.setVoltage(turnPID.calculate(getTurningPosition(), state.angle.getRadians()));
         // turnPID.setReference(state.angle.getDegrees(), ControlType.kPosition);
         // drive.setControl(driveRequest.withVelocity(state.speedMetersPerSecond));
+    }
+
+    //Sim
+    @Override
+    public void simulationPeriodic() {
+      // 1) Read your commanded wheel speed (m/s)
+      double wheelSpeedMps = getDrivingVelocity();
+  
+      // 2) Convert to rotations per second:
+      double wheelCircumference = Constants.wheelDiameterMeters * Math.PI;
+      double rps = wheelSpeedMps / wheelCircumference;
+  
+      // 3) Tell the TalonFX sim what its rotor velocity should be
+      driveSim.setRotorVelocity(rps);
     }
 }
