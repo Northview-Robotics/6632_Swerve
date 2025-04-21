@@ -14,6 +14,8 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.constants.Constants;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructArrayPublisher;
 
 public class Drive extends SubsystemBase{
     private static Drive swerve = null;
@@ -40,6 +42,9 @@ public class Drive extends SubsystemBase{
     private SlewRateLimiter turnLimiter;
     private SwerveModuleState[] moduleStates;
 
+    //Publish to advantage scope
+    StructArrayPublisher<SwerveModuleState> publisher;
+
     private Drive(){
         rightFront = new Module(8,1,0, Constants.rightAbsoluteEncoderOffset, true);
         leftFront = new Module(7,2,1, Constants.leftAbsoluteEncoderOffset, false);
@@ -63,9 +68,12 @@ public class Drive extends SubsystemBase{
         xLimiter = new SlewRateLimiter(Constants.maxDriveAcceletation);
         yLimiter = new SlewRateLimiter(Constants.maxDriveAcceletation);
         turnLimiter = new SlewRateLimiter(Constants.maxAngularAcceletation);
+
+        //Publish to advantage scope
+        publisher = NetworkTableInstance.getDefault().getStructArrayTopic("MyStates", SwerveModuleState.struct).publish();
     }
 
-    public void driveSwerve(double xInput, double yInput, double thetaInput, boolean botInput){
+    public void driveSwerve(double xInput, double yInput, double thetaInput){
         xSpeed = xLimiter.calculate(xInput); //Limit on X acceleration
         ySpeed = yLimiter.calculate(yInput); //Limit on Y acceletation
         theta = turnLimiter.calculate(thetaInput); //Limit on rotational acceleration
@@ -81,13 +89,8 @@ public class Drive extends SubsystemBase{
         }
 
         //Try only using the relative field mode if other trouble shooting methods fail
-        
-        if(botInput){
-            chassisSpeeds = new ChassisSpeeds(xSpeed, ySpeed, theta); //Bot moves relative to itself
-        }
-        else{
-            chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, theta, new Rotation2d(gyro.getYaw().getValueAsDouble())); //Bot moves relative to the field
-        }
+        chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, theta, new Rotation2d(gyro.getYaw().getValueAsDouble())); //Bot moves relative to the field
+      
 
         moduleStates = kinematics.toSwerveModuleStates(chassisSpeeds); //Calc each module angle and speed
         setModuleStates(moduleStates); //Apply to the modules
@@ -109,6 +112,16 @@ public class Drive extends SubsystemBase{
         rightRear.setState(desiredStates[3]);
     }
 
+    public SwerveModuleState[] getSwerveStates() {
+        return new SwerveModuleState[] {
+            new SwerveModuleState(leftFront.getDrivingVelocity(), leftFront.getAngle()),
+            new SwerveModuleState(rightFront.getDrivingVelocity(), rightFront.getAngle()),
+            new SwerveModuleState(leftRear.getDrivingVelocity(), leftRear.getAngle()),
+            new SwerveModuleState(rightRear.getDrivingVelocity(), rightRear.getAngle())
+        };
+    }
+    
+
     public SwerveModulePosition[] getModulePositions(){
         return new SwerveModulePosition[]{
             new SwerveModulePosition(leftFront.getDistance(), leftFront.getAngle()), // Front-Left
@@ -122,6 +135,7 @@ public class Drive extends SubsystemBase{
     public void periodic(){
         // Update the odometry constantly
         odometry.update(new Rotation2d(gyro.getYaw().getValueAsDouble()), getModulePositions());
+        publisher.set(getSwerveStates());
     }
 
     public static Drive getInstance(){

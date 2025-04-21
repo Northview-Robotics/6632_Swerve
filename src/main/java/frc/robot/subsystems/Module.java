@@ -39,7 +39,8 @@ public class Module extends SubsystemBase{
         turnEncoder = turn.getEncoder();
 
         //Motor Configurations
-        turn.configure(config1, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+        // turn.configure(config1, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+        
 
         //PIDS
         turnPID = new PIDController(Constants.turnP, Constants.turnI, Constants.turnD);
@@ -69,6 +70,10 @@ public class Module extends SubsystemBase{
         return turnEncoder.getVelocity();
     }   
 
+    public double getDrivingVelocity(){
+        return ((drive.getVelocity().getValueAsDouble())*12.566);
+    }
+
     public void resetEncoder(){
         drive.setPosition(0);
         turnEncoder.setPosition(getAbsoluteEncoder());
@@ -88,6 +93,7 @@ public class Module extends SubsystemBase{
             return;
         }
 
+        // state.optimize(new Rotation2d(getAbsoluteEncoder()));
         state.optimize(new Rotation2d(getAbsoluteEncoder()));
         drive.set(state.speedMetersPerSecond/ Constants.gear4); 
         turn.setVoltage(turnPID.calculate(getTurningPosition(), state.angle.getRadians()));
