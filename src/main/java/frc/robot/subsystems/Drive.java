@@ -112,7 +112,7 @@ public class Drive extends SubsystemBase{
         rightRear.setState(desiredStates[3]);
     }
 
-    public SwerveModuleState[] getSwerveStates() {
+    public SwerveModuleState[] getModuleStates() {
         return new SwerveModuleState[] {
             new SwerveModuleState(leftFront.getDrivingVelocity(), leftFront.getAngle()),
             new SwerveModuleState(rightFront.getDrivingVelocity(), rightFront.getAngle()),
@@ -135,7 +135,7 @@ public class Drive extends SubsystemBase{
     public void periodic(){
         // Update the odometry constantly
         odometry.update(new Rotation2d(gyro.getYaw().getValueAsDouble()), getModulePositions());
-        publisher.set(getSwerveStates());
+        publisher.set(moduleStates);
     }
 
     public static Drive getInstance(){
