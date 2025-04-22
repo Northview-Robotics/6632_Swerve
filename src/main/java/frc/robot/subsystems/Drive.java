@@ -1,13 +1,9 @@
 package frc.robot.subsystems;
 
 import com.ctre.phoenix6.hardware.Pigeon2;
-import com.ctre.phoenix6.sim.Pigeon2SimState;
-
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
@@ -49,10 +45,10 @@ public class Drive extends SubsystemBase{
 
     //Advantage scope
     private StructArrayPublisher<SwerveModuleState> publisher;
-    private StructPublisher<Pose3d> publisher3d;
-    private Pigeon2SimState pigeonSim;
-    private Pose2d currentPose2d;
-    private Pose3d currentPose3d;
+    private StructPublisher<Rotation2d> publisher2d;
+    private StructPublisher<ChassisSpeeds> publisherSpeed;
+
+    
 
     private Drive(){
         rightFront = new Module(8,1,0, Constants.rightAbsoluteEncoderOffset, false);
@@ -69,19 +65,19 @@ public class Drive extends SubsystemBase{
             new Translation2d(Units.inchesToMeters(-12.5), Units.inchesToMeters(-12.5))  // Back Right
         );
         //Odometry
-        odometry = new SwerveDriveOdometry(kinematics, new Rotation2d(gyro.getYaw().getValueAsDouble()), 
+        odometry = new SwerveDriveOdometry(kinematics, new Rotation2d(((gyro.getYaw().getValueAsDouble())*Math.PI)/180), 
             new SwerveModulePosition[]{new SwerveModulePosition(), new SwerveModulePosition(), new SwerveModulePosition(), new SwerveModulePosition()},
             new Pose2d(0,0,new Rotation2d()) 
         );
         //Acceleration limits
-        xLimiter = new SlewRateLimiter(Constants.maxDriveAcceletation);
-        yLimiter = new SlewRateLimiter(Constants.maxDriveAcceletation);
-        turnLimiter = new SlewRateLimiter(Constants.maxAngularAcceletation);
+        xLimiter = new SlewRateLimiter(Constants.maxDriveAcceleration);
+        yLimiter = new SlewRateLimiter(Constants.maxDriveAcceleration);
+        turnLimiter = new SlewRateLimiter(Constants.maxAngularAcceleration);
 
         //Advantage scope
         publisher = NetworkTableInstance.getDefault().getStructArrayTopic("MyStates", SwerveModuleState.struct).publish();
-        publisher3d = NetworkTableInstance.getDefault().getStructTopic("MyPose", Pose3d.struct).publish();
-        pigeonSim = gyro.getSimState();
+        publisher2d = NetworkTableInstance.getDefault().getStructTopic("MyRotation", Rotation2d.struct).publish();
+        publisherSpeed = NetworkTableInstance.getDefault().getStructTopic("MyChassisSpeed", ChassisSpeeds.struct).publish();
     }
 
     public void driveSwerve(double xInput, double yInput, double thetaInput){
@@ -102,11 +98,13 @@ public class Drive extends SubsystemBase{
         //Try only using the relative field mode if other trouble shooting methods fail
         chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, theta, new Rotation2d(gyro.getYaw().getValueAsDouble())); //Bot moves relative to the field
       
-
         moduleStates = kinematics.toSwerveModuleStates(chassisSpeeds); //Calc each module angle and speed
         setModuleStates(moduleStates); //Apply to the modules
 
         publisher.set(moduleStates);
+        publisherSpeed.set(chassisSpeeds);
+        Rotation2d realHeading = Rotation2d.fromDegrees(gyro.getYaw().getValueAsDouble());
+        publisher2d.set(realHeading);
     }
 
     public void stopModules(){
@@ -134,7 +132,6 @@ public class Drive extends SubsystemBase{
         };
     }
     
-
     public SwerveModulePosition[] getModulePositions(){
         return new SwerveModulePosition[]{
             new SwerveModulePosition(leftFront.getDistance(), leftFront.getAngle()), // Front-Left
@@ -150,23 +147,8 @@ public class Drive extends SubsystemBase{
         odometry.update(new Rotation2d(gyro.getYaw().getValueAsDouble()), getModulePositions());
 
         //Get current pose 3d for advantage scope
-        currentPose2d = odometry.getPoseMeters();
-        currentPose3d = new Pose3d(currentPose2d.getTranslation().getX(), currentPose2d.getTranslation().getY(), 0, new Rotation3d(currentPose2d.getRotation()));
+        // currentPose3d = new Pose3d(currentPose2d.getTranslation().getX(), currentPose2d.getTranslation().getY(), 0, new Rotation3d(currentPose2d.getRotation()));
         //Send 3D data to advantage scope
-        publisher3d.set(currentPose3d);
-    }
-
-    //Sim
-    @Override
-    public void simulationPeriodic() {
-        leftFront.simulationPeriodic();
-        rightFront.simulationPeriodic();
-        leftRear.simulationPeriodic();
-        rightRear.simulationPeriodic();
-
-        // 2) compute the “true” yaw in degrees (e.g. from your odometry or directly from theta)
-        double yawDeg = odometry.getPoseMeters().getRotation().getDegrees();
-        pigeonSim.setRawYaw(yawDeg);
     }
 
     public static Drive getInstance(){

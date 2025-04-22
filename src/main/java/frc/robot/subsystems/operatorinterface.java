@@ -13,7 +13,7 @@ public class operatorinterface extends SubsystemBase{
     }
 
     private void updateDrive(){
-       swerve.driveSwerve(controller1.getLeftY(), controller1.getLeftX(), controller1.getRightX());
+       swerve.driveSwerve(controller1.getRawAxis(0), controller1.getRawAxis(1), controller1.getRawAxis(2));
     }
     
 

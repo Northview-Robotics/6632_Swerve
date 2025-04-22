@@ -29,7 +29,7 @@ public final class Constants {
   public static final double driveMotorRampRate = 0.2;
   public static final IdleMode driveMode = IdleMode.kCoast;
   public static final double podMaxSpeed = 1;
-  public static final double maxDriveAcceletation = 3;
+  public static final double maxDriveAcceleration = 3;
 
   //Steer settings
   public static final double turnP = 0.4;
@@ -37,5 +37,5 @@ public final class Constants {
   public static final double turnD = 0.003;
   public static final int turnAmpLimit = 55;
   public static final IdleMode turnMode = IdleMode.kBrake;
-  public static final double maxAngularAcceletation = 3;
+  public static final double maxAngularAcceleration = Math.toRadians(180.0);
 }
