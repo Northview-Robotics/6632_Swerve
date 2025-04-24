@@ -1,9 +1,12 @@
 package frc.robot.subsystems;
 
 import com.ctre.phoenix6.hardware.Pigeon2;
+
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
@@ -46,9 +49,12 @@ public class Drive extends SubsystemBase{
     //Advantage scope
     private StructArrayPublisher<SwerveModuleState> publisher;
     private StructPublisher<Rotation2d> publisher2d;
+    private StructPublisher<Pose3d> publisher3d;
     private StructPublisher<ChassisSpeeds> publisherSpeed;
-
-    
+    private Pose2d currentPose2d;
+    private Pose3d currentPose3d;
+    private double calcGyro = 1;
+    private Rotation2d fakeHeading;
 
     private Drive(){
         rightFront = new Module(8,1,0, Constants.rightAbsoluteEncoderOffset, false);
@@ -78,6 +84,9 @@ public class Drive extends SubsystemBase{
         publisher = NetworkTableInstance.getDefault().getStructArrayTopic("MyStates", SwerveModuleState.struct).publish();
         publisher2d = NetworkTableInstance.getDefault().getStructTopic("MyRotation", Rotation2d.struct).publish();
         publisherSpeed = NetworkTableInstance.getDefault().getStructTopic("MyChassisSpeed", ChassisSpeeds.struct).publish();
+        publisher3d = NetworkTableInstance.getDefault().getStructTopic("/AdvantageScope/Robot/Pose", Pose3d.struct).publish();
+        fakeHeading = new Rotation2d();
+        // poseEstimator = new SwerveDrivePoseEstimator(kinematics, fakeHeading, getModulePositions(), new Pose2d(0, 0, new Rotation2d()));
     }
 
     public void driveSwerve(double xInput, double yInput, double thetaInput){
@@ -96,15 +105,26 @@ public class Drive extends SubsystemBase{
         }
 
         //Try only using the relative field mode if other trouble shooting methods fail
-        chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, theta, new Rotation2d(gyro.getYaw().getValueAsDouble())); //Bot moves relative to the field
+        // chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(-ySpeed, xSpeed, theta, new Rotation2d(gyro.getYaw().getValueAsDouble())); //Bot moves relative to the field
+        chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(-ySpeed, -xSpeed, -theta, fakeHeading); //Bot moves relative to the field
       
         moduleStates = kinematics.toSwerveModuleStates(chassisSpeeds); //Calc each module angle and speed
         setModuleStates(moduleStates); //Apply to the modules
 
         publisher.set(moduleStates);
         publisherSpeed.set(chassisSpeeds);
-        Rotation2d realHeading = Rotation2d.fromDegrees(gyro.getYaw().getValueAsDouble());
-        publisher2d.set(realHeading);
+        fakeHeading = Rotation2d.fromDegrees(fakeGyro(thetaInput));
+        publisher2d.set(fakeHeading);
+    }
+
+    public double fakeGyro(double joystick){
+        if(joystick > 0.1){
+            calcGyro = calcGyro + (5*joystick);
+        }
+        else if(joystick < -0.1){
+            calcGyro = calcGyro + (5*joystick);
+        }
+        return calcGyro;
     }
 
     public void stopModules(){
@@ -123,6 +143,7 @@ public class Drive extends SubsystemBase{
         rightRear.setState(desiredStates[3]);
     }
 
+    //Using sim methods right now
     public SwerveModuleState[] getModuleStates() {
         return new SwerveModuleState[] {
             new SwerveModuleState(leftFront.getDrivingVelocity(), leftFront.getAngle()),
@@ -132,23 +153,27 @@ public class Drive extends SubsystemBase{
         };
     }
     
+    //Using sim methods right now
     public SwerveModulePosition[] getModulePositions(){
         return new SwerveModulePosition[]{
-            new SwerveModulePosition(leftFront.getDistance(), leftFront.getAngle()), // Front-Left
-            new SwerveModulePosition(rightFront.getDistance(), rightFront.getAngle()), // Front-Right
-            new SwerveModulePosition(leftRear.getDistance(), leftRear.getAngle()), // Back-Left
-            new SwerveModulePosition(rightRear.getDistance(), rightRear.getAngle())  // Back-Right
+            new SwerveModulePosition(leftFront.getSimDistance(), leftFront.getSimAngle()), // Front-Left
+            new SwerveModulePosition(rightFront.getSimDistance(), rightFront.getSimAngle()), // Front-Right
+            new SwerveModulePosition(leftRear.getSimDistance(), leftRear.getSimAngle()), // Back-Left
+            new SwerveModulePosition(rightRear.getSimDistance(), rightRear.getSimAngle())  // Back-Right
         };
     }
 
     @Override
     public void periodic(){
         // Update the odometry constantly
-        odometry.update(new Rotation2d(gyro.getYaw().getValueAsDouble()), getModulePositions());
+        // odometry.update(new Rotation2d(gyro.getYaw().getValueAsDouble()), getModulePositions());
+        odometry.update(fakeHeading, getModulePositions());
 
         //Get current pose 3d for advantage scope
-        // currentPose3d = new Pose3d(currentPose2d.getTranslation().getX(), currentPose2d.getTranslation().getY(), 0, new Rotation3d(currentPose2d.getRotation()));
+        currentPose2d = odometry.getPoseMeters();
+        currentPose3d = new Pose3d(currentPose2d.getTranslation().getX(), currentPose2d.getTranslation().getY(), 0, new Rotation3d(fakeHeading));
         //Send 3D data to advantage scope
+        publisher3d.set(currentPose3d);
     }
 
     public static Drive getInstance(){

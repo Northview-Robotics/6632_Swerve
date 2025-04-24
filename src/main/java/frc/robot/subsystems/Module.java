@@ -25,6 +25,8 @@ public class Module extends SubsystemBase{
     private PIDController turnPID;
     private double encoderOffset;
     private boolean encoderReversed;
+    private double simulatedDistanceMeters = 0;
+    private double simulatedTurningPosition = 0;
 
     public Module(int driveID, int turnID, int absoluteEncoderID, double moduleOffset, boolean reversed){
         //Module initializations
@@ -54,8 +56,16 @@ public class Module extends SubsystemBase{
         return drive.getPosition().getValueAsDouble();
     }
 
+    public double getSimDistance(){
+        return simulatedDistanceMeters;
+    }
+
     public Rotation2d getAngle(){
         return Rotation2d.fromRadians(turnEncoder.getPosition()*(Constants.absoluteRadiansPerEncoderRotation));
+    }
+
+    public Rotation2d getSimAngle(){
+        return Rotation2d.fromRadians(simulatedTurningPosition * Constants.absoluteRadiansPerEncoderRotation);
     }
 
     public double getTurningPosition(){
@@ -93,6 +103,22 @@ public class Module extends SubsystemBase{
         state.optimize(new Rotation2d(getAbsoluteEncoder()));
         drive.set(state.speedMetersPerSecond/ Constants.gear4); 
         turn.setVoltage(turnPID.calculate(getTurningPosition(), state.angle.getRadians()));
+
+        //advantageScope
+        simulatedDistanceMeters += state.speedMetersPerSecond* 0.02;
+
+        simulatedDistanceMeters += state.speedMetersPerSecond * 0.02;
+
+        // Smooth simulated turning position
+        double targetAngleRad = state.angle.getRadians();
+        double delta = targetAngleRad - (simulatedTurningPosition * Constants.absoluteRadiansPerEncoderRotation);
+
+        // Wrap delta to [-π, π] for continuous input
+        delta = Math.atan2(Math.sin(delta), Math.cos(delta));
+
+        double simulatedTurnSpeed = 4.0; // Tune for sim responsiveness
+        simulatedTurningPosition += delta * simulatedTurnSpeed * 0.02;
+
         // turnPID.setReference(state.angle.getDegrees(), ControlType.kPosition);
         // drive.setControl(driveRequest.withVelocity(state.speedMetersPerSecond));
     }
