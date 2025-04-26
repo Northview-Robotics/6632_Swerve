@@ -106,7 +106,7 @@ public class Drive extends SubsystemBase{
 
         //Try only using the relative field mode if other trouble shooting methods fail
         // chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(-ySpeed, xSpeed, theta, new Rotation2d(gyro.getYaw().getValueAsDouble())); //Bot moves relative to the field
-        chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(-ySpeed, -xSpeed, -theta, fakeHeading); //Bot moves relative to the field
+        chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(-ySpeed, -xSpeed, theta, fakeHeading); //Bot moves relative to the field
       
         moduleStates = kinematics.toSwerveModuleStates(chassisSpeeds); //Calc each module angle and speed
         setModuleStates(moduleStates); //Apply to the modules
@@ -118,11 +118,8 @@ public class Drive extends SubsystemBase{
     }
 
     public double fakeGyro(double joystick){
-        if(joystick > 0.1){
-            calcGyro = calcGyro + (5*joystick);
-        }
-        else if(joystick < -0.1){
-            calcGyro = calcGyro + (5*joystick);
+        if(Math.abs(joystick) > 0.1){
+            calcGyro = calcGyro - (5*joystick);
         }
         return calcGyro;
     }
