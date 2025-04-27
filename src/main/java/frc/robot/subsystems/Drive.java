@@ -1,6 +1,14 @@
 package frc.robot.subsystems;
 
+import java.util.Optional;
+
 import com.ctre.phoenix6.hardware.Pigeon2;
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.config.PIDConstants;
+import com.pathplanner.lib.config.RobotConfig;
+import com.pathplanner.lib.controllers.PPHolonomicDriveController;
+import com.pathplanner.lib.trajectory.PathPlannerTrajectory;
+import com.pathplanner.lib.trajectory.PathPlannerTrajectoryState;
 
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -19,6 +27,8 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.networktables.StructPublisher;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 
 public class Drive extends SubsystemBase{
     private static Drive swerve = null;
@@ -56,6 +66,9 @@ public class Drive extends SubsystemBase{
     private double calcGyro = 1;
     private Rotation2d fakeHeading;
 
+    //Pathplanner
+    private RobotConfig config;
+
     private Drive(){
         rightFront = new Module(8,1,0, Constants.rightAbsoluteEncoderOffset, false);
         leftFront = new Module(7,2,1, Constants.leftAbsoluteEncoderOffset, false);
@@ -86,7 +99,38 @@ public class Drive extends SubsystemBase{
         publisherSpeed = NetworkTableInstance.getDefault().getStructTopic("MyChassisSpeed", ChassisSpeeds.struct).publish();
         publisher3d = NetworkTableInstance.getDefault().getStructTopic("/AdvantageScope/Robot/Pose", Pose3d.struct).publish();
         fakeHeading = new Rotation2d();
-        // poseEstimator = new SwerveDrivePoseEstimator(kinematics, fakeHeading, getModulePositions(), new Pose2d(0, 0, new Rotation2d()));
+
+        //Pathplanner
+        try {
+            config = RobotConfig.fromGUISettings();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // Configure AutoBuilder last
+            AutoBuilder.configure(
+            this::getPose, // Robot pose supplier
+            this::resetPose, // Method to reset odometry (will be called if your auto has a starting pose)
+            this::getChassisSpeeds, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
+            (speeds, feedforwards) -> setChassisSpeeds(speeds), // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds. Also optionally outputs individual module feedforwards
+            new PPHolonomicDriveController( // PPHolonomicController is the built in path following controller for holonomic drive trains
+                    new PIDConstants(5.0, 0.0, 0.0), // Translation PID constants
+                    new PIDConstants(5.0, 0.0, 0.0) // Rotation PID constants
+            ),
+            config, // The robot configuration
+            () -> {
+              // Boolean supplier that controls when the path will be mirrored for the red alliance
+              // This will flip the path being followed to the red side of the field.
+              // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
+
+              var alliance = DriverStation.getAlliance();
+              if (alliance.isPresent()) {
+                return alliance.get() == DriverStation.Alliance.Red;
+              }
+              return false;
+            },
+            Drive.this// Reference to this subsystem to set requirements
+        );
     }
 
     public void driveSwerve(double xInput, double yInput, double thetaInput){
@@ -104,7 +148,6 @@ public class Drive extends SubsystemBase{
             theta = 0;
         }
 
-        //Try only using the relative field mode if other trouble shooting methods fail
         // chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(-ySpeed, xSpeed, theta, new Rotation2d(gyro.getYaw().getValueAsDouble())); //Bot moves relative to the field
         chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(-ySpeed, -xSpeed, theta, fakeHeading); //Bot moves relative to the field
       
@@ -122,6 +165,10 @@ public class Drive extends SubsystemBase{
             calcGyro = calcGyro - (5*joystick);
         }
         return calcGyro;
+    }
+
+    public Rotation2d calcFakeGyro(double angularVelocity){
+        return fakeHeading = fakeHeading.plus(Rotation2d.fromRadians(angularVelocity*0.2));
     }
 
     public void stopModules(){
@@ -158,6 +205,40 @@ public class Drive extends SubsystemBase{
             new SwerveModulePosition(leftRear.getSimDistance(), leftRear.getSimAngle()), // Back-Left
             new SwerveModulePosition(rightRear.getSimDistance(), rightRear.getSimAngle())  // Back-Right
         };
+    }
+
+    //Gyro changes based alliance
+    public void setHeading(){
+        Optional<Alliance> ally = DriverStation.getAlliance();
+        if(ally.isPresent()){
+            if(ally.get() == Alliance.Red){
+                calcGyro = -180;
+            }
+            if(ally.get() == Alliance.Blue){
+                calcGyro = 1;
+            }          
+        }
+    }
+
+    //Pathplanner methods
+    public Pose2d getPose(){
+        currentPose2d = odometry.getPoseMeters();
+        return currentPose2d;
+    }
+
+    public void resetPose(Pose2d pose){
+        setHeading();
+        odometry.resetPosition(pose.getRotation(), getModulePositions(), pose);
+    }
+
+    public ChassisSpeeds getChassisSpeeds(){
+       return kinematics.toChassisSpeeds(moduleStates);
+    }
+
+    public void setChassisSpeeds(ChassisSpeeds speeds){
+        moduleStates = kinematics.toSwerveModuleStates(speeds); //Calc each module angle and speed
+        setModuleStates(moduleStates); //Apply to the modules
+        calcFakeGyro(speeds.omegaRadiansPerSecond); //Rotate
     }
 
     @Override
