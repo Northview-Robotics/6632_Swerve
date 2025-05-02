@@ -3,25 +3,25 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 1.3823630136986302,
-        "y": 7.157855308219178
+        "x": 1.683,
+        "y": 7.383
       },
       "prevControl": null,
       "nextControl": {
-        "x": 2.3823630136986305,
-        "y": 7.157855308219178
+        "x": 2.134618870954289,
+        "y": 7.050742993877722
       },
       "isLocked": false,
-      "linkedName": "PickUp1End"
+      "linkedName": "Pickup1End"
     },
     {
       "anchor": {
-        "x": 3.936729452054794,
-        "y": 5.234567636986301
+        "x": 3.937,
+        "y": 5.235
       },
       "prevControl": {
-        "x": 3.7413955479452046,
-        "y": 6.121083047945205
+        "x": 3.550281659083055,
+        "y": 5.5399079370947115
       },
       "nextControl": null,
       "isLocked": false,
@@ -45,10 +45,10 @@
     "rotation": -57.52880770915179
   },
   "reversed": false,
-  "folder": null,
+  "folder": "2 Coral L4 Blue",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": -52.69605172201652
+    "rotation": -59.03624346792653
   },
   "useDefaultConstraints": true
 }

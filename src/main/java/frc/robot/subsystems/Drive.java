@@ -1,5 +1,6 @@
 package frc.robot.subsystems;
 
+import java.util.List;
 import java.util.Optional;
 
 import com.ctre.phoenix6.hardware.Pigeon2;
@@ -7,8 +8,10 @@ import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
-import com.pathplanner.lib.trajectory.PathPlannerTrajectory;
-import com.pathplanner.lib.trajectory.PathPlannerTrajectoryState;
+import com.pathplanner.lib.path.GoalEndState;
+import com.pathplanner.lib.path.PathConstraints;
+import com.pathplanner.lib.path.PathPlannerPath;
+import com.pathplanner.lib.path.Waypoint;
 
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -21,9 +24,11 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.constants.Constants;
 import edu.wpi.first.math.util.Units;
+
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.networktables.StructPublisher;
@@ -63,11 +68,16 @@ public class Drive extends SubsystemBase{
     private StructPublisher<ChassisSpeeds> publisherSpeed;
     private Pose2d currentPose2d;
     private Pose3d currentPose3d;
-    private double calcGyro = 1;
+    private double calcGyro = 0;
     private Rotation2d fakeHeading;
 
     //Pathplanner
     private RobotConfig config;
+
+    //On the fly path generation
+    List<Waypoint> waypoints;
+    PathConstraints constraints;
+    PathPlannerPath path;
 
     private Drive(){
         rightFront = new Module(8,1,0, Constants.rightAbsoluteEncoderOffset, false);
@@ -131,6 +141,7 @@ public class Drive extends SubsystemBase{
             },
             Drive.this// Reference to this subsystem to set requirements
         );
+
     }
 
     public void driveSwerve(double xInput, double yInput, double thetaInput){
@@ -148,7 +159,7 @@ public class Drive extends SubsystemBase{
             theta = 0;
         }
 
-        // chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(-ySpeed, xSpeed, theta, new Rotation2d(gyro.getYaw().getValueAsDouble())); //Bot moves relative to the field
+        // chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(-ySpeed, xSpeed, theta, new Rotation2d(gyro.getYaw().getValueAsDouble())); 
         chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(-ySpeed, -xSpeed, theta, fakeHeading); //Bot moves relative to the field
       
         moduleStates = kinematics.toSwerveModuleStates(chassisSpeeds); //Calc each module angle and speed
@@ -165,10 +176,6 @@ public class Drive extends SubsystemBase{
             calcGyro = calcGyro - (5*joystick);
         }
         return calcGyro;
-    }
-
-    public Rotation2d calcFakeGyro(double angularVelocity){
-        return fakeHeading = fakeHeading.plus(Rotation2d.fromRadians(angularVelocity*0.2));
     }
 
     public void stopModules(){
@@ -212,10 +219,10 @@ public class Drive extends SubsystemBase{
         Optional<Alliance> ally = DriverStation.getAlliance();
         if(ally.isPresent()){
             if(ally.get() == Alliance.Red){
-                calcGyro = -180;
+                fakeHeading = Rotation2d.fromDegrees(0);
             }
             if(ally.get() == Alliance.Blue){
-                calcGyro = 1;
+                fakeHeading = Rotation2d.fromDegrees(180);
             }          
         }
     }
@@ -227,7 +234,6 @@ public class Drive extends SubsystemBase{
     }
 
     public void resetPose(Pose2d pose){
-        setHeading();
         odometry.resetPosition(pose.getRotation(), getModulePositions(), pose);
     }
 
@@ -238,7 +244,26 @@ public class Drive extends SubsystemBase{
     public void setChassisSpeeds(ChassisSpeeds speeds){
         moduleStates = kinematics.toSwerveModuleStates(speeds); //Calc each module angle and speed
         setModuleStates(moduleStates); //Apply to the modules
-        calcFakeGyro(speeds.omegaRadiansPerSecond); //Rotate
+    }
+
+    //Generate a path on the fly
+    public void driveToPose(Pose2d targetPose) {
+        PathConstraints constraints = new PathConstraints(3.0, 3.0, Math.toRadians(540), Math.toRadians(720));
+        Command pathCommand = AutoBuilder.pathfindToPose(targetPose, constraints, 0.0);
+        pathCommand.schedule();  // <== this makes the robot actually run it
+    }
+
+    public void followDynamicPath(Pose2d intermediate, Pose2d target) {
+        List<Waypoint> waypoints = PathPlannerPath.waypointsFromPoses(getPose(), intermediate, target);
+        PathConstraints constraints = new PathConstraints(3.0, 3.0, 2 * Math.PI, 2 * Math.PI);
+        PathPlannerPath path = new PathPlannerPath(
+            waypoints,
+            constraints,
+            null,
+            new GoalEndState(0.0, target.getRotation())
+        );
+        path.preventFlipping = true;
+        AutoBuilder.followPath(path).schedule();  // Schedule the command
     }
 
     @Override

@@ -21,6 +21,12 @@
           "data": {
             "pathName": "Cycle2"
           }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Pickup2"
+          }
         }
       ]
     }
