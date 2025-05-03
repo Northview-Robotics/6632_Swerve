@@ -1,8 +1,6 @@
 package frc.robot.subsystems;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.XboxController;
 
 public class operatorinterface extends SubsystemBase{
@@ -17,19 +15,9 @@ public class operatorinterface extends SubsystemBase{
     private void updateDrive(){
         swerve.driveSwerve(controller1.getRawAxis(0), controller1.getRawAxis(1), controller1.getRawAxis(2));
        //swerve.driveSwerve( -controller1.getRawAxis(0),  -controller1.getRawAxis(1),  -controller1.getRawAxis(2));
-        if (controller1.getRawButtonPressed(2)) {
-            swerve.driveToPose(new Pose2d(5.0, 2.0, Rotation2d.fromDegrees(180)));
-        }
-
-        if (controller1.getRawButtonPressed(4)) {
-            swerve.followDynamicPath(
-                new Pose2d(1.732, 7.393, Rotation2d.fromDegrees(-43.919)),
-                new Pose2d(3.964, 5.247, Rotation2d.fromDegrees(-44.648))
-            );
-        }
+        swerve.chooseTarget(controller1.getRightBumperButtonPressed(), controller1.getLeftBumperButtonPressed(), controller1.getYButtonPressed(), controller1.getRawButtonPressed(3));
     }
     
-
     @Override
     public void periodic(){
         updateDrive();

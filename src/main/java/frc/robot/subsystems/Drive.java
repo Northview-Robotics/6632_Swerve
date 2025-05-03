@@ -24,7 +24,6 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.constants.Constants;
 import edu.wpi.first.math.util.Units;
@@ -34,6 +33,7 @@ import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Drive extends SubsystemBase{
     private static Drive swerve = null;
@@ -75,9 +75,41 @@ public class Drive extends SubsystemBase{
     private RobotConfig config;
 
     //On the fly path generation
-    List<Waypoint> waypoints;
-    PathConstraints constraints;
-    PathPlannerPath path;
+    public List<Waypoint> waypoints;
+    public PathConstraints constraints;
+    public PathPlannerPath path; 
+
+    private Pose2d[] startPoses = {
+        //Right coral station
+        new Pose2d(1.732, 0.718, Rotation2d.fromDegrees(0)),
+        new Pose2d(1.732, 0.718, Rotation2d.fromDegrees(0)),
+        new Pose2d(1.732, 0.718, Rotation2d.fromDegrees(0)),
+        new Pose2d(1.732, 0.718, Rotation2d.fromDegrees(0)),
+        new Pose2d(1.732, 0.718, Rotation2d.fromDegrees(0)),
+        new Pose2d(1.732, 0.718, Rotation2d.fromDegrees(0)),
+        new Pose2d(1.732, 0.718, Rotation2d.fromDegrees(0)),
+        //Left coral station
+        new Pose2d(1.661, 7.359, Rotation2d.fromDegrees(0)),
+        new Pose2d(1.661, 7.359, Rotation2d.fromDegrees(0)),
+        new Pose2d(1.661, 7.359, Rotation2d.fromDegrees(0)),
+        new Pose2d(1.661, 7.359, Rotation2d.fromDegrees(0)),
+        new Pose2d(1.661, 7.359, Rotation2d.fromDegrees(0))   
+    };
+    private Pose2d[] endPoses = {
+        new Pose2d(5.810, 4.918, Rotation2d.fromDegrees(0)),//1a
+        new Pose2d(5.810, 3.877, Rotation2d.fromDegrees(0)),//1b
+        new Pose2d(5.291, 2.975, Rotation2d.fromDegrees(0)),//2a
+        new Pose2d(5.000, 2.815, Rotation2d.fromDegrees(0)),//2b
+        new Pose2d(3.958, 2.827, Rotation2d.fromDegrees(0)),//3a
+        new Pose2d(3.698, 2.963, Rotation2d.fromDegrees(0)),//3b
+        new Pose2d(3.180, 3.852, Rotation2d.fromDegrees(0)),//4a
+        new Pose2d(3.180, 4.198, Rotation2d.fromDegrees(0)),//4b
+        new Pose2d(3.674, 5.087, Rotation2d.fromDegrees(0)),//5a
+        new Pose2d(3.970, 5.247, Rotation2d.fromDegrees(0)),//5b
+        new Pose2d(5.020, 5.235, Rotation2d.fromDegrees(0)),//6a
+        new Pose2d(5.316, 5.062, Rotation2d.fromDegrees(0)),//6b
+    };
+    private int poseIndex = 1;
 
     private Drive(){
         rightFront = new Module(8,1,0, Constants.rightAbsoluteEncoderOffset, false);
@@ -247,10 +279,33 @@ public class Drive extends SubsystemBase{
     }
 
     //Generate a path on the fly
-    public void driveToPose(Pose2d targetPose) {
-        PathConstraints constraints = new PathConstraints(3.0, 3.0, Math.toRadians(540), Math.toRadians(720));
-        Command pathCommand = AutoBuilder.pathfindToPose(targetPose, constraints, 0.0);
-        pathCommand.schedule();  // <== this makes the robot actually run it
+    public void chooseTarget(boolean input1, boolean input2, boolean input3, boolean input4){
+        if(input1){
+            poseIndex += 1;
+            if(poseIndex > 12){
+                poseIndex = 12;
+            }
+            SmartDashboard.putNumber("currentTarget :", poseIndex);
+        }
+        if(input2){
+            poseIndex -= 1;
+            if(poseIndex < 1){
+                poseIndex = 1;
+            }
+            SmartDashboard.putNumber("currentTarget :", poseIndex);
+        }
+        if(input3){
+            swerve.followDynamicPath(
+                startPoses[poseIndex-1],
+                endPoses[poseIndex-1]
+            );
+        }
+        if(input4){
+            swerve.followDynamicPath(
+                new Pose2d(7.107, 6.692, Rotation2d.fromDegrees(0)),
+                new Pose2d(8.745, 6.692, Rotation2d.fromDegrees(0))
+            );
+        }
     }
 
     public void followDynamicPath(Pose2d intermediate, Pose2d target) {
