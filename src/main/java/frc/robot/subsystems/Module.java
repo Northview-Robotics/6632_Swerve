@@ -1,11 +1,8 @@
 package frc.robot.subsystems;
 
 import com.ctre.phoenix6.hardware.TalonFX;
-import com.revrobotics.spark.SparkBase.PersistMode;
-import com.revrobotics.spark.SparkBase.ResetMode;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
-import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.RelativeEncoder;
 
 import edu.wpi.first.math.controller.PIDController;
@@ -18,7 +15,6 @@ import frc.robot.constants.Constants;
 public class Module extends SubsystemBase{
     private SparkMax turn;
     private TalonFX drive;
-    private SparkMaxConfig config1;
 
     private RelativeEncoder turnEncoder;
     private AnalogEncoder absoluteEncoder;

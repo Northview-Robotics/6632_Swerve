@@ -285,14 +285,14 @@ public class Drive extends SubsystemBase{
             if(poseIndex > 12){
                 poseIndex = 12;
             }
-            SmartDashboard.putNumber("currentTarget :", poseIndex);
+            SmartDashboard.putNumber("currentTarget", poseIndex);
         }
         if(input2){
             poseIndex -= 1;
             if(poseIndex < 1){
                 poseIndex = 1;
             }
-            SmartDashboard.putNumber("currentTarget :", poseIndex);
+            SmartDashboard.putNumber("currentTarget", poseIndex);
         }
         if(input3){
             swerve.followDynamicPath(
