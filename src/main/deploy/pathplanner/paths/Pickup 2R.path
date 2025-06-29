@@ -3,13 +3,13 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 13.808604452054794,
-        "y": 5.1293878424657535
+        "x": 3.681292808219178,
+        "y": 5.069285102739726
       },
       "prevControl": null,
       "nextControl": {
-        "x": 13.99407131108921,
-        "y": 5.2985803854470035
+        "x": 3.866759667253593,
+        "y": 5.238477645720976
       },
       "isLocked": false,
       "linkedName": "Cycle2R End"
@@ -48,7 +48,7 @@
   "folder": "2 Coral L4 Red",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": -119.47588900324577
+    "rotation": -58.39249775375115
   },
   "useDefaultConstraints": true
 }

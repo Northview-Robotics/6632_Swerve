@@ -3,29 +3,29 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 15.88214897260274,
-        "y": 7.368214897260274
-      },
-      "prevControl": null,
-      "nextControl": {
-        "x": 15.065394225053792,
-        "y": 6.458263981197701
-      },
-      "isLocked": false,
-      "linkedName": "Pickup2R End"
-    },
-    {
-      "anchor": {
         "x": 3.681292808219178,
         "y": 5.069285102739726
       },
+      "prevControl": null,
+      "nextControl": {
+        "x": 3.96234726528271,
+        "y": 4.941888280674486
+      },
+      "isLocked": false,
+      "linkedName": "Cycle3End"
+    },
+    {
+      "anchor": {
+        "x": 1.683,
+        "y": 7.383
+      },
       "prevControl": {
-        "x": 4.1893106621432,
-        "y": 5.6389607296076125
+        "x": 1.4435329751060528,
+        "y": 7.607790639147866
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "Cycle2R End"
+      "linkedName": "Pickup1End"
     }
   ],
   "rotationTargets": [],
@@ -42,13 +42,13 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": -58.39249775375115
+    "rotation": -59.03624346792653
   },
   "reversed": false,
-  "folder": "2 Coral L4 Red",
+  "folder": "3 Coral L4 Blue",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": -127.23483398157475
+    "rotation": -58.39249775375115
   },
   "useDefaultConstraints": true
 }

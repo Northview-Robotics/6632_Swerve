@@ -38,4 +38,9 @@ public final class Constants {
   public static final int turnAmpLimit = 55;
   public static final IdleMode turnMode = IdleMode.kBrake;
   public static final double maxAngularAcceleration = Math.toRadians(180.0);
+
+  //Vision 
+  public static final double visionX = 0.2;
+  public static final double visionY = 0.0;
+  public static final double visionRotation = 0.0; //Radiens
 }
