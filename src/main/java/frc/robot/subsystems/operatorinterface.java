@@ -15,7 +15,7 @@ public class operatorinterface extends SubsystemBase{
     }
 
     private void updateDrive(){
-        swerve.driveSwerve(controller1.getRawAxis(0), controller1.getRawAxis(1), controller1.getRawAxis(2));
+        swerve.driveSwerve(controller1.getRawAxis(0), controller1.getRawAxis(1), controller1.getRawAxis(4));
         swerve.chooseTarget(controller1.getRightBumperButtonPressed(), controller1.getLeftBumperButtonPressed(), controller1.getYButtonPressed(), controller1.getRawButtonPressed(3));
     }
 
