@@ -18,6 +18,7 @@ import java.util.Optional;
 import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
 import org.photonvision.PhotonPoseEstimator.PoseStrategy;
+import org.photonvision.estimation.TargetModel;
 import org.photonvision.simulation.PhotonCameraSim;
 import org.photonvision.simulation.VisionSystemSim;
 import org.photonvision.simulation.VisionTargetSim;
@@ -32,6 +33,11 @@ public class Vision extends SubsystemBase{
     private VisionSystemSim visionSim;
     private final Transform3d cameraPos;
     private AprilTagFieldLayout field;   
+    private TargetModel targetModel;
+
+    //Vision parameters
+    private double t_Width = 0.5;
+    private double t_Height = 0.25;
 
     //Advantage Scope
     private StructArrayPublisher<Pose3d> as_aprilTags;
@@ -72,16 +78,19 @@ public class Vision extends SubsystemBase{
 
         camera = new PhotonCamera("cam1");
         cameraSim = new PhotonCameraSim(camera, cameraProp);
-        cameraSim.enableDrawWireframe(true);
         cameraPos = new Transform3d(
             new Translation3d(0.5, 0.0, 0.5), //Position of camera on the robot
             new Rotation3d(0, 0, 0) //Rotate the camera POV
         );
+        cameraSim.enableRawStream(true);
+        cameraSim.enableProcessedStream(true);
+        cameraSim.enableDrawWireframe(true);
 
         //Simulation
         visionSim = new VisionSystemSim("main");
         visionSim.addCamera(cameraSim, cameraPos);
         visionSim.addAprilTags(field);
+        targetModel = new TargetModel(t_Width, t_Height);
         
         //Pose estimation tools
         strat = PoseStrategy.AVERAGE_BEST_TARGETS;
