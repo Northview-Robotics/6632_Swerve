@@ -7,8 +7,8 @@ public class operatorinterface extends SubsystemBase{
     private static operatorinterface oi = null;
     private XboxController controller1;
     private Drive swerve = Drive.getInstance();
-    private Telemetry telemetry = Telemetry.getInstance();
     private Vision vision = Vision.getInstance();
+    private Telemetry telemetry = Telemetry.getInstance();
 
     private operatorinterface(){
         controller1 = new XboxController(0);
@@ -24,7 +24,7 @@ public class operatorinterface extends SubsystemBase{
     }
 
     private void updateVision(){
-        vision.triggerIntake(controller1.getAButtonPressed());
+        vision.updateVision(swerve.getPose());
     }
     
     @Override

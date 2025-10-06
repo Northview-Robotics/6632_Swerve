@@ -14,8 +14,6 @@ public class Elevator extends SubsystemBase{
         leftLift = new TalonFX(13);
     }
 
-
-
     public static Elevator getInstance(){
         if (elevator == null){
             elevator = new Elevator();
