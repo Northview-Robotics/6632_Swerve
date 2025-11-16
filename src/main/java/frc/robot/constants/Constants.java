@@ -31,9 +31,9 @@ public final class Constants {
   public static final double driveMotorRampRate = 0.2;
   public static final IdleMode driveMode = IdleMode.kCoast;
 
-  public static final double maxDriveSpeed = Units.feetToMeters(4.5);
+  public static final double maxDriveSpeed = Units.feetToMeters(15);
   public static final Pose2d startPose = new Pose2d(1, 1, Rotation2d.fromDegrees(0));
-  public static final double maxDriveAcceleration = 3;
+  public static final double maxDriveAcceleration = 4;
   public static final double deadband = 0.05;
 
   //Steer settings

@@ -12,7 +12,7 @@ public class Telemetry extends SubsystemBase{
     private static Telemetry telemetry = null;
     private PowerDistribution pdp;
     private Field2d field2d;
-    private drive swerve = drive.getInstance();
+    private drive drivetrain = drive.getInstance();
 
     private Telemetry(){
         pdp = new PowerDistribution(10, ModuleType.kCTRE);
@@ -23,7 +23,7 @@ public class Telemetry extends SubsystemBase{
 
     public void update(){
         //Send current velocity to the dashboard
-        ChassisSpeeds robotSpeed = swerve.getChassisSpeeds();
+        ChassisSpeeds robotSpeed = drivetrain.getRobotSpeed();
         double robotVelocity = Math.hypot(robotSpeed.vxMetersPerSecond, robotSpeed.vyMetersPerSecond);
         SmartDashboard.putNumber("Velocity", robotVelocity);
 
@@ -39,7 +39,7 @@ public class Telemetry extends SubsystemBase{
         SmartDashboard.putNumber("Voltage ", voltage);
 
         //Update robot position on the 2d field inside the dashboard
-        field2d.setRobotPose(swerve.getPose());
+        field2d.setRobotPose(drivetrain.getRobotPose());
     }
 
     public static Telemetry getInstance(){

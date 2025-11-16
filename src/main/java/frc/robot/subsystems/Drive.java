@@ -86,6 +86,15 @@ public class drive extends SubsystemBase {
         return calcGyro;
     }
 
+    //Helper methods
+    public ChassisSpeeds getRobotSpeed(){
+        return swerveDrive.getFieldVelocity();
+    }
+
+    public Pose2d getRobotPose(){
+        return swerveDrive.getPose();
+    }
+
     @Override
     public void periodic(){
         //Get current pose 3d for advantage scope

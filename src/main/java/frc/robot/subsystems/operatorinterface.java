@@ -6,7 +6,7 @@ import edu.wpi.first.wpilibj.XboxController;
 public class operatorinterface extends SubsystemBase{
     private static operatorinterface oi = null;
     private XboxController controller1;
-    private drive swerve = drive.getInstance();
+    private drive drivetrain = drive.getInstance();
     private Telemetry telemetry = Telemetry.getInstance();
 
     private operatorinterface(){
@@ -14,8 +14,7 @@ public class operatorinterface extends SubsystemBase{
     }
 
     private void updateDrive(){
-        swerve.driveSwerve(controller1.getRawAxis(0), controller1.getRawAxis(1), controller1.getRawAxis(4));
-        swerve.chooseTarget(controller1.getRightBumperButtonPressed(), controller1.getLeftBumperButtonPressed(), controller1.getYButtonPressed(), controller1.getRawButtonPressed(3));
+        drivetrain.swerveSupplier(-controller1.getLeftY(), -controller1.getLeftX(), controller1.getRightX());
     }
 
     private void updateTelemetry(){
