@@ -6,8 +6,7 @@ import edu.wpi.first.wpilibj.XboxController;
 public class operatorinterface extends SubsystemBase{
     private static operatorinterface oi = null;
     private XboxController controller1;
-    private Drive swerve = Drive.getInstance();
-    private Vision vision = Vision.getInstance();
+    private drive swerve = drive.getInstance();
     private Telemetry telemetry = Telemetry.getInstance();
 
     private operatorinterface(){
@@ -22,16 +21,11 @@ public class operatorinterface extends SubsystemBase{
     private void updateTelemetry(){
         telemetry.update();
     }
-
-    private void updateVision(){
-        vision.updateVision(swerve.getPose());
-    }
     
     @Override
     public void periodic(){
         updateDrive();
         updateTelemetry();
-        updateVision();
     }
 
     public static operatorinterface getInstance(){

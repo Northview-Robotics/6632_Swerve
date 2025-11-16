@@ -12,7 +12,7 @@ public class Telemetry extends SubsystemBase{
     private static Telemetry telemetry = null;
     private PowerDistribution pdp;
     private Field2d field2d;
-    private Drive swerve = Drive.getInstance();
+    private drive swerve = drive.getInstance();
 
     private Telemetry(){
         pdp = new PowerDistribution(10, ModuleType.kCTRE);

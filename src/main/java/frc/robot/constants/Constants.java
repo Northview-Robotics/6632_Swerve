@@ -2,6 +2,8 @@ package frc.robot.constants;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 
 public final class Constants {
   public static final double wheelDiameterMeters = 4.0;
@@ -28,8 +30,11 @@ public final class Constants {
   public static final double driveSpeedToPower = 1.0;
   public static final double driveMotorRampRate = 0.2;
   public static final IdleMode driveMode = IdleMode.kCoast;
-  public static final double podMaxSpeed = 1;
+
+  public static final double maxDriveSpeed = Units.feetToMeters(4.5);
+  public static final Pose2d startPose = new Pose2d(1, 1, Rotation2d.fromDegrees(0));
   public static final double maxDriveAcceleration = 3;
+  public static final double deadband = 0.05;
 
   //Steer settings
   public static final double turnP = 0.4;
