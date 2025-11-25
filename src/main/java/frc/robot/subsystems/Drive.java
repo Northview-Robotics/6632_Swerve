@@ -15,6 +15,8 @@ import frc.robot.constants.Constants;
 import java.io.File;
 import edu.wpi.first.wpilibj.Filesystem;
 import swervelib.parser.SwerveParser;
+import swervelib.telemetry.SwerveDriveTelemetry;
+import swervelib.telemetry.SwerveDriveTelemetry.TelemetryVerbosity;
 import swervelib.SwerveDrive;
 import swervelib.SwerveInputStream;
 
@@ -23,7 +25,7 @@ public class drive extends SubsystemBase {
     private static drive swerve = null;
     
     //YAGSL
-    private File directory = new File(Filesystem.getDeployDirectory(),"swerve");
+    private File directory = new File(Filesystem.getDeployDirectory(),"swerve2");
     private SwerveDrive swerveDrive;
     private SwerveInputStream angularVel;
     private SwerveInputStream driveVel;
@@ -41,7 +43,8 @@ public class drive extends SubsystemBase {
     private drive(){
         try
         {
-        swerveDrive = new SwerveParser(directory).createSwerveDrive(Constants.maxDriveSpeed, Constants.startPose);
+            SwerveDriveTelemetry.verbosity = TelemetryVerbosity.HIGH;
+            swerveDrive = new SwerveParser(directory).createSwerveDrive(Constants.maxDriveSpeed, Constants.startPose);
         } catch (Exception e)
         {
         throw new RuntimeException(e);
@@ -56,6 +59,9 @@ public class drive extends SubsystemBase {
     }
 
     public void swerveSupplier(double x, double y, double theta){
+        fakeHeading = Rotation2d.fromDegrees(fakeGyro(theta));
+        publisher2d.set(fakeHeading);
+
         angularVel = SwerveInputStream.of(
             returnSwerveDrive(), 
             () -> x, 
@@ -63,12 +69,10 @@ public class drive extends SubsystemBase {
         ).withControllerRotationAxis(() -> theta).scaleRotation(0.8).deadband(Constants.deadband).allianceRelativeControl(true);   
 
         driveVel = angularVel.copy().withControllerHeadingAxis(() -> x, () ->y);
-        drive(angularVel.get());
+        //drive(angularVel.get());
         drive(driveVel.get());
 
         publisherSpeed.set(swerveDrive.getFieldVelocity());
-        fakeHeading = Rotation2d.fromDegrees(fakeGyro(theta));
-        publisher2d.set(fakeHeading);
     }
 
     private SwerveDrive returnSwerveDrive(){

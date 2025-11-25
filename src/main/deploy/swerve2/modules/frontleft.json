@@ -1,22 +1,22 @@
 {
   "location": {
-    "front": -12.5,
-    "left": 12.5
+    "front": 15.75,
+    "left": 15.75
   },
-  "absoluteEncoderOffset": 1.056659935134538,
+  "absoluteEncoderOffset": 0,
   "drive": {
     "type": "sparkflex_vortex",
-    "id": 2,
-    "canbus": null
+    "id": 1,
+    "canbus": 1
   },
   "angle": {
     "type": "sparkmax_neo",
-    "id": 6,
-    "canbus": null
+    "id": 5,
+    "canbus": 5
   },
   "encoder": {
     "type": "thrifty",
-    "id": 1,
+    "id": 0,
     "canbus": null
   },
   "inverted": {
