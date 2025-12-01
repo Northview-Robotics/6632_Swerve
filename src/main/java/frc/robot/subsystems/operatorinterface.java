@@ -14,17 +14,17 @@ public class operatorinterface extends SubsystemBase{
     }
 
     private void updateDrive(){
-        drivetrain.swerveSupplier(-controller1.getLeftY(), -controller1.getLeftX(), controller1.getRightX());
+        drivetrain.swerveSupplier(-controller1.getLeftY(), -controller1.getLeftX(), controller1.getRawAxis(2));
     }
 
-    private void updateTelemetry(){
-        telemetry.update();
-    }
+    // private void updateTelemetry(){
+    //     telemetry.update();
+    // }
     
     @Override
     public void periodic(){
         updateDrive();
-        updateTelemetry();
+        //updateTelemetry();
     }
 
     public static operatorinterface getInstance(){

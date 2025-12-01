@@ -52,16 +52,13 @@ public class drive extends SubsystemBase {
 
         //Advantage Scope
         //publisher = NetworkTableInstance.getDefault().getStructArrayTopic("MyStates", SwerveModuleState.struct).publish();
-        publisher2d = NetworkTableInstance.getDefault().getStructTopic("MyRotation", Rotation2d.struct).publish();
+        publisher2d = NetworkTableInstance.getDefault().getStructTopic("MyRot", Rotation2d.struct).publish();
         publisherSpeed = NetworkTableInstance.getDefault().getStructTopic("MyChassisSpeed", ChassisSpeeds.struct).publish();
         publisher3d = NetworkTableInstance.getDefault().getStructTopic("/AdvantageScope/Robot/Pose", Pose3d.struct).publish();
         fakeHeading = new Rotation2d();
     }
 
     public void swerveSupplier(double x, double y, double theta){
-        fakeHeading = Rotation2d.fromDegrees(fakeGyro(theta));
-        publisher2d.set(fakeHeading);
-
         angularVel = SwerveInputStream.of(
             returnSwerveDrive(), 
             () -> x, 
@@ -73,6 +70,8 @@ public class drive extends SubsystemBase {
         drive(driveVel.get());
 
         publisherSpeed.set(swerveDrive.getFieldVelocity());
+        fakeHeading = Rotation2d.fromDegrees(fakeGyro(theta));
+        publisher2d.set(fakeHeading);
     }
 
     private SwerveDrive returnSwerveDrive(){
