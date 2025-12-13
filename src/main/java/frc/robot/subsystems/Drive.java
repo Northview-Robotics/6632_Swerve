@@ -1,10 +1,10 @@
 package frc.robot.subsystems;
 
+//WPILIB Imports
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
-//WPILIB Imports
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
@@ -13,12 +13,20 @@ import frc.robot.constants.Constants;
 
 //YAGSL Imports
 import java.io.File;
+
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
 import swervelib.parser.SwerveParser;
 import swervelib.telemetry.SwerveDriveTelemetry;
 import swervelib.telemetry.SwerveDriveTelemetry.TelemetryVerbosity;
 import swervelib.SwerveDrive;
 import swervelib.SwerveInputStream;
+
+//Pathplanner imports
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.config.PIDConstants;
+import com.pathplanner.lib.config.RobotConfig;
+import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 
 
 public class drive extends SubsystemBase {
@@ -31,7 +39,6 @@ public class drive extends SubsystemBase {
     private SwerveInputStream driveVel;
 
     //Advantage Scope
-    //private StructArrayPublisher<SwerveModuleState> publisher;
     private StructPublisher<Rotation2d> publisher2d;
     private StructPublisher<Pose3d> publisher3d;
     private StructPublisher<ChassisSpeeds> publisherSpeed;
@@ -39,6 +46,9 @@ public class drive extends SubsystemBase {
     private Pose3d currentPose3d;
     private Rotation2d fakeHeading;
     private double calcGyro = 0;
+
+    //Pathplanner
+    private RobotConfig config;
 
     private drive(){
         try
@@ -56,8 +66,40 @@ public class drive extends SubsystemBase {
         publisherSpeed = NetworkTableInstance.getDefault().getStructTopic("MyChassisSpeed", ChassisSpeeds.struct).publish();
         publisher3d = NetworkTableInstance.getDefault().getStructTopic("/AdvantageScope/Robot/Pose", Pose3d.struct).publish();
         fakeHeading = new Rotation2d();
+
+        //Pathplanner
+        try {
+            config = RobotConfig.fromGUISettings();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // Configure AutoBuilder last
+            AutoBuilder.configure(
+            this::getRobotPose, 
+            this::resetRobotPose, 
+            this::getRobotSpeed, 
+            (speeds, feedforwards) -> drive(speeds), 
+            new PPHolonomicDriveController( 
+                    new PIDConstants(5.0, 0.0, 0.0), // Movement PID constants
+                    new PIDConstants(5.0, 0.0, 0.0) // Rotation PID constants
+            ),
+            config,
+            () -> {
+              // Boolean supplier that controls when the path will be mirrored for the red alliance
+
+              var alliance = DriverStation.getAlliance();
+              if (alliance.isPresent()) {
+                return alliance.get() == DriverStation.Alliance.Red;
+              }
+              return false;
+            },
+            drive.this// Reference to this subsystem to set requirements
+        );
+
     }
 
+    //Main driving code
     public void swerveSupplier(double x, double y, double theta){
         angularVel = SwerveInputStream.of(
             returnSwerveDrive(), 
@@ -74,12 +116,25 @@ public class drive extends SubsystemBase {
         publisher2d.set(fakeHeading);
     }
 
+    //Helper methods
     private SwerveDrive returnSwerveDrive(){
         return swerveDrive;
     }
 
     private void drive(ChassisSpeeds vel){
         swerveDrive.driveFieldOriented(vel);
+    }
+
+    public ChassisSpeeds getRobotSpeed(){
+        return swerveDrive.getFieldVelocity();
+    }
+
+    public Pose2d getRobotPose(){
+        return swerveDrive.getPose();
+    }
+
+    public void resetRobotPose(Pose2d pose){
+        swerveDrive.resetOdometry(pose);
     }
 
     public double fakeGyro(double joystick){
@@ -89,15 +144,7 @@ public class drive extends SubsystemBase {
         return calcGyro;
     }
 
-    //Helper methods
-    public ChassisSpeeds getRobotSpeed(){
-        return swerveDrive.getFieldVelocity();
-    }
-
-    public Pose2d getRobotPose(){
-        return swerveDrive.getPose();
-    }
-
+    //Update advantage scope periodically
     @Override
     public void periodic(){
         //Get current pose 3d for advantage scope

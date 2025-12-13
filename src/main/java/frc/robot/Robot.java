@@ -7,13 +7,14 @@ package frc.robot;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.commands.RobotContainer;
 import frc.robot.subsystems.drive;
 import frc.robot.subsystems.operatorinterface;
 
 public class Robot extends TimedRobot {
   public drive drivetrain;
   public operatorinterface oi;
-
+  public RobotContainer rc;
 
   public Command getAutonomousCommand;
 
@@ -24,6 +25,7 @@ public class Robot extends TimedRobot {
   public void robotInit() {
     drivetrain = drive.getInstance();
     oi = operatorinterface.getInstance();
+    rc = new RobotContainer();
   }
 
   @Override
@@ -40,11 +42,11 @@ public class Robot extends TimedRobot {
 
   @Override
   public void autonomousInit() {
-  //   getAutonomousCommand = robotContainer.getAutonomousCommand();
+    getAutonomousCommand = rc.getAutonomousCommand();
     
-  //   if (getAutonomousCommand != null){
-  //     getAutonomousCommand.schedule();
-  //  }
+    if (getAutonomousCommand != null){
+      getAutonomousCommand.schedule();
+   }
   }
 
   @Override

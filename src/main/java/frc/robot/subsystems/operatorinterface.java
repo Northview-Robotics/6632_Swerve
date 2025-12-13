@@ -7,6 +7,7 @@ public class operatorinterface extends SubsystemBase{
     private static operatorinterface oi = null;
     private XboxController controller1;
     private drive drivetrain = drive.getInstance();
+    private Vision vision = Vision.getInstance();
     private Telemetry telemetry = Telemetry.getInstance();
 
     private operatorinterface(){
@@ -17,14 +18,19 @@ public class operatorinterface extends SubsystemBase{
         drivetrain.swerveSupplier(-controller1.getLeftY(), -controller1.getLeftX(), controller1.getRawAxis(2));
     }
 
-    // private void updateTelemetry(){
-    //     telemetry.update();
-    // }
+    private void updateTelemetry(){
+        telemetry.update();
+    }
+
+    private void updateVision(){
+        vision.updateVision(drivetrain.getRobotPose());
+    }
     
     @Override
     public void periodic(){
         updateDrive();
-        //updateTelemetry();
+        updateVision();
+        updateTelemetry();
     }
 
     public static operatorinterface getInstance(){
