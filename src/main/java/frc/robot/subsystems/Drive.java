@@ -13,6 +13,7 @@ import frc.robot.constants.Constants;
 
 //YAGSL Imports
 import java.io.File;
+import java.util.List;
 
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
@@ -27,6 +28,10 @@ import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
+import com.pathplanner.lib.path.GoalEndState;
+import com.pathplanner.lib.path.PathConstraints;
+import com.pathplanner.lib.path.PathPlannerPath;
+import com.pathplanner.lib.path.Waypoint;
 
 
 public class drive extends SubsystemBase {
@@ -108,12 +113,25 @@ public class drive extends SubsystemBase {
         ).withControllerRotationAxis(() -> theta).scaleRotation(0.8).deadband(Constants.deadband).allianceRelativeControl(true);   
 
         driveVel = angularVel.copy().withControllerHeadingAxis(() -> x, () ->y);
-        //drive(angularVel.get());
         drive(driveVel.get());
 
         publisherSpeed.set(swerveDrive.getFieldVelocity());
         fakeHeading = Rotation2d.fromDegrees(fakeGyro(theta));
         publisher2d.set(fakeHeading);
+    }
+
+    //Path finding
+    public void followGeneratedPath(Pose2d intermediate, Pose2d target) {
+        List<Waypoint> waypoints = PathPlannerPath.waypointsFromPoses(getRobotPose(), intermediate, target);
+        PathConstraints constraints = new PathConstraints(4.0, 3.0, 2 * Math.PI, 2 * Math.PI);
+        PathPlannerPath path = new PathPlannerPath(
+            waypoints,
+            constraints,
+            null,
+            new GoalEndState(0.0, target.getRotation())
+        );
+        path.preventFlipping = true;
+        AutoBuilder.followPath(path).schedule();  //Follow path
     }
 
     //Helper methods
@@ -148,8 +166,9 @@ public class drive extends SubsystemBase {
     @Override
     public void periodic(){
         //Get current pose 3d for advantage scope
+        Rotation2d heading = swerveDrive.getYaw();
         currentPose2d = swerveDrive.getPose();
-        currentPose3d = new Pose3d(currentPose2d.getTranslation().getX(), currentPose2d.getTranslation().getY(), 0, new Rotation3d(fakeHeading));
+        currentPose3d = new Pose3d(currentPose2d.getX(), currentPose2d.getY(), 0, new Rotation3d(heading));
         //Send 3D data to advantage scope
         publisher3d.set(currentPose3d);
     }

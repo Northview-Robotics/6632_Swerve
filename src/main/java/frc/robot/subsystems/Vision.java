@@ -21,6 +21,7 @@ import org.photonvision.PhotonPoseEstimator.PoseStrategy;
 import org.photonvision.estimation.TargetModel;
 import org.photonvision.simulation.PhotonCameraSim;
 import org.photonvision.simulation.VisionSystemSim;
+import org.photonvision.targeting.PhotonTrackedTarget;
 import org.photonvision.simulation.SimCameraProperties;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
@@ -63,6 +64,9 @@ public class Vision extends SubsystemBase{
     private PhotonCameraSim cameraSim;
     private PhotonCamera camera;
 
+    //Target info
+    int tagId;
+
     private Vision(){
         //Field Setup
         field = AprilTagFields.kDefaultField.loadAprilTagLayoutField();
@@ -101,6 +105,16 @@ public class Vision extends SubsystemBase{
         as_estimatedCameraPose = NetworkTableInstance.getDefault().getStructTopic("estimatedPose", Pose2d.struct).publish();
     }
 
+    public int getTargetAprilTag(){
+        var result = camera.getLatestResult();
+        for(PhotonTrackedTarget target : result.getTargets()){
+            tagId = target.fiducialId;
+        }
+        
+        return tagId;
+    }
+
+    //Helper Methods
     public void updateVision(Pose2d botPose){
         visionSim.update(botPose);
         Optional<Pose3d> camPose = visionSim.getCameraPose(cameraSim);
