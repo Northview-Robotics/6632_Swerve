@@ -28,7 +28,7 @@ public class operatorinterface extends SubsystemBase{
     }
 
     public void updateAlign(){
-        align.alignToTarget(controller1.getLeftBumperButtonReleased(), controller1.getRightBumperButtonReleased());
+        align.alignToTarget(controller1.getRawButtonPressed(5), controller1.getRawButtonPressed(6));
     }
     
     @Override

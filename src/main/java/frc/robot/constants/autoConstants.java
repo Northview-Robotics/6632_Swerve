@@ -33,10 +33,18 @@ public final class autoConstants {
     public static final Pose2d B6R = new Pose2d(3.95, 2.8, Rotation2d.fromDegrees(0));
 
     //Blue april tags
-    public static final int tagB1 = 15;
-    public static final int tagB2 = 16;
-    public static final int tagB3 = 8;
-    public static final int tagB4 = 9;
-    public static final int tagB5 = 10;
-    public static final int tagB6 = 11;
+    public static final int tagB1 = 14;
+    public static final int tagB2 = 15;
+    public static final int tagB3 = 16;
+    public static final int tagB4 = 17;
+    public static final int tagB5 = 18;
+    public static final int tagB6 = 19;
+
+    //Red april tags
+    public static final int tagR1 = 8;
+    public static final int tagR2 = 9;
+    public static final int tagR3 = 10;
+    public static final int tagR4 = 11;
+    public static final int tagR5 = 12;
+    public static final int tagR6 = 13;
 }

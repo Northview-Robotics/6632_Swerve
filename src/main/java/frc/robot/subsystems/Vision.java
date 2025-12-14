@@ -82,7 +82,7 @@ public class Vision extends SubsystemBase{
         camera = new PhotonCamera("cam1");
         cameraSim = new PhotonCameraSim(camera, cameraProp);
         cameraPos = new Transform3d(
-            new Translation3d(0.5, 0.0, 0.5), //Position of camera on the robot
+            new Translation3d(0.5, 0.0, 1), //Position of camera on the robot
             new Rotation3d(0, 0, 0) //Rotate the camera POV
         );
         cameraSim.enableRawStream(true);
@@ -107,8 +107,12 @@ public class Vision extends SubsystemBase{
 
     public int getTargetAprilTag(){
         var result = camera.getLatestResult();
+        double areaMax = 0;
         for(PhotonTrackedTarget target : result.getTargets()){
-            tagId = target.fiducialId;
+            if(target.getArea() > areaMax){
+                tagId = target.fiducialId;
+                areaMax = target.getArea();
+            }
         }
         
         return tagId;
