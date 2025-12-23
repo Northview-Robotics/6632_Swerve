@@ -140,11 +140,11 @@ public class drive extends SubsystemBase {
     }
 
     private void drive(ChassisSpeeds vel){
-        swerveDrive.driveFieldOriented(vel);
+        swerveDrive.drive(vel);
     }
 
     public ChassisSpeeds getRobotSpeed(){
-        return swerveDrive.getFieldVelocity();
+        return swerveDrive.getRobotVelocity();
     }
 
     public Pose2d getRobotPose(){

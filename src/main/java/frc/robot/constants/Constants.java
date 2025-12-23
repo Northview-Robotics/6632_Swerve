@@ -13,5 +13,5 @@ public final class Constants {
   //Vision 
   public static final double visionX = 0.2;
   public static final double visionY = 0.0;
-  public static final double visionRotation = 0.0; //
+  public static final double visionRotation = 0.0; 
 }
