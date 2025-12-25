@@ -21,7 +21,7 @@ import org.photonvision.PhotonPoseEstimator.PoseStrategy;
 import org.photonvision.estimation.TargetModel;
 import org.photonvision.simulation.PhotonCameraSim;
 import org.photonvision.simulation.VisionSystemSim;
-import org.photonvision.simulation.VisionTargetSim;
+import org.photonvision.targeting.PhotonTrackedTarget;
 import org.photonvision.simulation.SimCameraProperties;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
@@ -64,6 +64,9 @@ public class Vision extends SubsystemBase{
     private PhotonCameraSim cameraSim;
     private PhotonCamera camera;
 
+    //Target info
+    int tagId;
+
     private Vision(){
         //Field Setup
         field = AprilTagFields.kDefaultField.loadAprilTagLayoutField();
@@ -79,7 +82,7 @@ public class Vision extends SubsystemBase{
         camera = new PhotonCamera("cam1");
         cameraSim = new PhotonCameraSim(camera, cameraProp);
         cameraPos = new Transform3d(
-            new Translation3d(0.5, 0.0, 0.5), //Position of camera on the robot
+            new Translation3d(0.5, 0.0, 1), //Position of camera on the robot
             new Rotation3d(0, 0, 0) //Rotate the camera POV
         );
         cameraSim.enableRawStream(true);
@@ -102,6 +105,20 @@ public class Vision extends SubsystemBase{
         as_estimatedCameraPose = NetworkTableInstance.getDefault().getStructTopic("estimatedPose", Pose2d.struct).publish();
     }
 
+    public int getTargetAprilTag(){
+        var result = camera.getLatestResult();
+        double areaMax = 0;
+        for(PhotonTrackedTarget target : result.getTargets()){
+            if(target.getArea() > areaMax){
+                tagId = target.fiducialId;
+                areaMax = target.getArea();
+            }
+        }
+        
+        return tagId;
+    }
+
+    //Helper Methods
     public void updateVision(Pose2d botPose){
         visionSim.update(botPose);
         Optional<Pose3d> camPose = visionSim.getCameraPose(cameraSim);
