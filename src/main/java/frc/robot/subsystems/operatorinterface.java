@@ -16,7 +16,8 @@ public class operatorinterface extends SubsystemBase{
     }
 
     private void updateDrive(){
-        drivetrain.swerveSupplier(-controller1.getLeftY(), -controller1.getLeftX(), -controller1.getRawAxis(2));
+        //drivetrain.swerveSupplier(-controller1.getLeftY(), -controller1.getLeftX(), -controller1.getRawAxis(2));
+        drivetrain.testInverts(controller1.getRightBumperButtonPressed(), controller1.getLeftBumperButtonPressed(), controller1.getYButton(), controller1.getAButton());
     }
 
     private void updateTelemetry(){
@@ -34,8 +35,8 @@ public class operatorinterface extends SubsystemBase{
     @Override
     public void periodic(){
         updateDrive();
-        updateVision();
-        updateAlign();
+        //updateVision();
+        //updateAlign();
         updateTelemetry();
     }
 

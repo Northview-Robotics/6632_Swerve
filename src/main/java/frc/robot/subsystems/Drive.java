@@ -22,6 +22,7 @@ import swervelib.telemetry.SwerveDriveTelemetry;
 import swervelib.telemetry.SwerveDriveTelemetry.TelemetryVerbosity;
 import swervelib.SwerveDrive;
 import swervelib.SwerveInputStream;
+import swervelib.SwerveModule;
 
 //Pathplanner imports
 import com.pathplanner.lib.auto.AutoBuilder;
@@ -44,16 +45,16 @@ public class drive extends SubsystemBase {
     private SwerveInputStream driveVel;
 
     //Advantage Scope
-    private StructPublisher<Rotation2d> publisher2d;
     private StructPublisher<Pose3d> publisher3d;
     private StructPublisher<ChassisSpeeds> publisherSpeed;
     private Pose2d currentPose2d;
     private Pose3d currentPose3d;
-    private Rotation2d fakeHeading;
-    private double calcGyro = 0;
 
     //Pathplanner
     private RobotConfig config;
+
+    //Testing inverts delete later
+    public int selectedModule;
 
     private drive(){
         try
@@ -66,11 +67,8 @@ public class drive extends SubsystemBase {
         }
 
         //Advantage Scope
-        //publisher = NetworkTableInstance.getDefault().getStructArrayTopic("MyStates", SwerveModuleState.struct).publish();
-        publisher2d = NetworkTableInstance.getDefault().getStructTopic("MyRot", Rotation2d.struct).publish();
         publisherSpeed = NetworkTableInstance.getDefault().getStructTopic("MyChassisSpeed", ChassisSpeeds.struct).publish();
         publisher3d = NetworkTableInstance.getDefault().getStructTopic("/AdvantageScope/Robot/Pose", Pose3d.struct).publish();
-        fakeHeading = new Rotation2d();
 
         //Pathplanner
         try {
@@ -116,8 +114,6 @@ public class drive extends SubsystemBase {
         drive(driveVel.get());
 
         publisherSpeed.set(swerveDrive.getFieldVelocity());
-        fakeHeading = Rotation2d.fromDegrees(fakeGyro(theta));
-        publisher2d.set(fakeHeading);
     }
 
     //Path finding
@@ -155,11 +151,23 @@ public class drive extends SubsystemBase {
         swerveDrive.resetOdometry(pose);
     }
 
-    public double fakeGyro(double joystick){
-        if(Math.abs(joystick) > 0.1){
-            calcGyro = calcGyro - (5*joystick);
-        }
-        return calcGyro;
+    public double getRawEncoderVal(int targetModule){
+        SwerveModule[] modules = swerveDrive.getModules();
+        double rawVal = modules[targetModule].getAbsoluteEncoder().getAbsolutePosition();
+        return rawVal;
+    }
+    
+    public void testInverts(boolean toggleUp, boolean toggleDown, boolean runDrive, boolean runAngle){
+        SwerveModule[] modules = swerveDrive.getModules();
+        if(toggleUp && (selectedModule <= 3)) selectedModule += 1;
+        if(toggleDown && (selectedModule >= 0)) selectedModule -= 1;
+        if(runDrive) modules[selectedModule].getDriveMotor().setVoltage(3);
+        if(runAngle) modules[selectedModule].getAngleMotor().setVoltage(3);
+    }
+
+    public double getRobotYaw(){
+        double yaw = swerveDrive.getYaw().getDegrees(); 
+        return yaw;
     }
 
     //Update advantage scope periodically

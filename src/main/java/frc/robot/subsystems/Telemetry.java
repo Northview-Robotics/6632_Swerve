@@ -28,6 +28,21 @@ public class Telemetry extends SubsystemBase{
         ChassisSpeeds currentVelocity = drivetrain.getRobotSpeed();
         double botVelocity = Math.hypot(currentVelocity.vxMetersPerSecond, currentVelocity.vyMetersPerSecond);
         SmartDashboard.putNumber("Velocity", botVelocity);
+
+        //Get encoder offsets
+        double offset1 = drivetrain.getRawEncoderVal(0);
+        double offset2 = drivetrain.getRawEncoderVal(1);
+        double offset3 = drivetrain.getRawEncoderVal(2);
+        double offset4 = drivetrain.getRawEncoderVal(3);
+        
+        SmartDashboard.putNumber("Encoder1", offset1);
+        SmartDashboard.putNumber("Encoder2", offset2);
+        SmartDashboard.putNumber("Encoder3", offset3);
+        SmartDashboard.putNumber("Encoder4", offset4);
+
+        //Get gyro inversion
+        double robotRot = drivetrain.getRobotYaw();
+        SmartDashboard.putNumber("Robot Angle", robotRot);
     }
 
     public static Telemetry getInstance(){
